@@ -1,7 +1,6 @@
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import praktikum.Bun;
 import praktikum.Burger;
@@ -9,7 +8,6 @@ import praktikum.Ingredient;
 import praktikum.IngredientType;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -19,21 +17,33 @@ public class BurgerTests {
     private Bun bunMock;
     @Mock
     private Ingredient ingredientMock;
+    @Mock
+    private Ingredient ingredientMock2;
+    @Mock
+    private Ingredient ingredientMock3;
 
     @Test
-    public void testAddIngredient_and_GetPrice() {
+    public void testAddIngredient() {
         Burger burger = new Burger();
         burger.setBuns(bunMock);
+        when(bunMock.getPrice()).thenReturn(100f);
+        burger.addIngredient(ingredientMock);
+        assertTrue(burger.ingredients.contains(ingredientMock));
 
+    }
+
+    @Test
+    public void testGetPrice() {
+        Burger burger = new Burger();
+        burger.setBuns(bunMock);
         when(bunMock.getPrice()).thenReturn(100f);
         when(ingredientMock.getPrice()).thenReturn(200f);
-
         burger.addIngredient(ingredientMock);
-
-        // Проверяем, что цена учитывает булочку и ингредиент
-        float expectedPrice = 2 * 100f + 200f; // Цена за две булочки и один ингредиент
+        float expectedPrice = 2 * 100f + 200f;
         assertEquals(expectedPrice, burger.getPrice(), 0.0);
+
     }
+
 
     @Test
     public void testRemoveIngredient() {
@@ -49,15 +59,23 @@ public class BurgerTests {
     @Test
     public void testMoveIngredient() {
         Burger burger = new Burger();
-        Ingredient ingredient1 = mock(Ingredient.class);
-        Ingredient ingredient2 = mock(Ingredient.class);
+        burger.setBuns(bunMock);
 
-        burger.addIngredient(ingredient1);
-        burger.addIngredient(ingredient2);
+        burger.addIngredient(ingredientMock);// Добавление мок-ингредиентов в burger
+        burger.addIngredient(ingredientMock2);
+        burger.addIngredient(ingredientMock3);
 
-        burger.moveIngredient(0, 1);
-        assertEquals(ingredient1, burger.ingredients.get(1));
-        assertEquals(ingredient2, burger.ingredients.get(0));
+        assertEquals(ingredientMock, burger.ingredients.get(0)); // Проверяем начальный порядок
+        assertEquals(ingredientMock2, burger.ingredients.get(1));
+        assertEquals(ingredientMock3, burger.ingredients.get(2));
+
+        burger.moveIngredient(0, 2);// Выполнение перемещения
+
+        assertEquals(ingredientMock2, burger.ingredients.get(0));
+        assertEquals(ingredientMock3, burger.ingredients.get(1));
+        assertEquals(ingredientMock, burger.ingredients.get(2));
+
+
     }
 
     @Test
@@ -65,14 +83,46 @@ public class BurgerTests {
         Burger burger = new Burger();
         burger.setBuns(bunMock);
         burger.addIngredient(ingredientMock);
+        burger.addIngredient(ingredientMock2);
+        burger.addIngredient(ingredientMock3);
 
         when(bunMock.getName()).thenReturn("black bun");
-        when(ingredientMock.getName()).thenReturn("sour cream");
-        when(ingredientMock.getType()).thenReturn(IngredientType.FILLING);
+        when(bunMock.getPrice()).thenReturn(100f);
 
-        String receipt = burger.getReceipt();
-        assertTrue(receipt.contains("black bun"));
-        assertTrue(receipt.contains("sour cream"));
-        assertTrue(receipt.contains("Price:"));
+        when(ingredientMock.getName()).thenReturn("sour cream");
+        when(ingredientMock.getType()).thenReturn(IngredientType.SAUCE);
+        when(ingredientMock.getPrice()).thenReturn(200f);
+
+        when(ingredientMock2.getName()).thenReturn("cutlet");
+        when(ingredientMock2.getType()).thenReturn(IngredientType.FILLING);
+        when(ingredientMock2.getPrice()).thenReturn(100f);
+
+        when(ingredientMock3.getName()).thenReturn("dinosaur");
+        when(ingredientMock3.getType()).thenReturn(IngredientType.FILLING);
+        when(ingredientMock3.getPrice()).thenReturn(200f);
+
+        String actualReceipt = burger.getReceipt();
+        String expectedReceipt = String.format(
+                "(==== black bun ====)%n" +
+                        "= sauce sour cream =%n" +
+                        "= filling cutlet =%n" +
+                        "= filling dinosaur =%n" +
+                        "(==== black bun ====)%n" +
+                        "%nPrice: 700,000000%n");
+
+        assertEquals(expectedReceipt, actualReceipt);
+
     }
+    @Test
+    public void testSetBuns() {
+        Burger burger = new Burger();
+        assertNull(burger.bun); // Проверяем, что изначально булочки не установлены
+
+        burger.setBuns(bunMock);
+        assertSame(bunMock, burger.bun); // Проверяем, что переданная булочка корректно установлена
+
+        burger.setBuns(null);
+        assertNull(burger.bun);
+    }
+
 }
